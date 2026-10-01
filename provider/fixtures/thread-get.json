@@ -1,0 +1,43 @@
+{
+  "$comment": "A two-message thread, oldest first -- Gmail's own order. Each message shaped like message_get's output, minus the top-level threadId Gmail does not repeat per message inside a thread response.",
+  "operation": "thread_get",
+
+  "response": {
+    "id": { "$config": "id", "as": "string", "fallback": { "$fake": "hex", "length": 16 } },
+    "historyId": { "$fake": "digits", "length": 10 },
+    "messages": [
+      {
+        "id": { "$fake": "hex", "length": 16 },
+        "labelIds": ["INBOX", "IMPORTANT"],
+        "snippet": "Hey team, scheduling the Q3 design review for Thursday at 2pm. Conference room B...",
+        "internalDate": "1790625600000",
+        "payload": {
+          "mimeType": "text/plain",
+          "headers": [
+            { "name": "From", "value": "Ada Lovelace <ada@example.test>" },
+            { "name": "To", "value": "Grace Hopper <grace@example.test>" },
+            { "name": "Subject", "value": "Design review Thursday" },
+            { "name": "Date", "value": "Mon, 28 Sep 2026 09:00:00 -0400" }
+          ],
+          "body": { "size": 540, "data": { "$fake": "id", "prefix": "base64url_body" } }
+        }
+      },
+      {
+        "id": { "$fake": "hex", "length": 16 },
+        "labelIds": ["INBOX", "UNREAD", "IMPORTANT"],
+        "snippet": "Hi Ada, just confirming the design review is still on for Thursday at 2pm. Let me know if...",
+        "internalDate": "1790712000000",
+        "payload": {
+          "mimeType": "text/plain",
+          "headers": [
+            { "name": "From", "value": "Grace Hopper <grace@example.test>" },
+            { "name": "To", "value": "Ada Lovelace <ada@example.test>" },
+            { "name": "Subject", "value": "Re: Design review Thursday" },
+            { "name": "Date", "value": "Tue, 29 Sep 2026 14:03:00 -0400" }
+          ],
+          "body": { "size": 612, "data": { "$fake": "id", "prefix": "base64url_body" } }
+        }
+      }
+    ]
+  }
+}

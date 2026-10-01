@@ -1,0 +1,31 @@
+{
+  "$comment": "Three system labels and one user label -- an author sees both shapes side by side. Count fields shown on the system labels since Label's own schema declares them; not asserted present on every row (see the action's own outputShape note).",
+  "operation": "label_list",
+
+  "response": {
+    "labels": [
+      { "id": "INBOX", "name": "INBOX", "type": "system" },
+      { "id": "UNREAD", "name": "UNREAD", "type": "system" },
+      {
+        "id": "IMPORTANT",
+        "name": "IMPORTANT",
+        "type": "system",
+        "messagesTotal": 412,
+        "messagesUnread": 18,
+        "threadsTotal": 203,
+        "threadsUnread": 11
+      },
+      {
+        "id": { "$fake": "id", "prefix": "Label" },
+        "name": "Design Reviews",
+        "type": "user",
+        "messageListVisibility": "show",
+        "labelListVisibility": "labelShow",
+        "messagesTotal": 27,
+        "messagesUnread": 2,
+        "threadsTotal": 9,
+        "threadsUnread": 1
+      }
+    ]
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "name": "particle-academy/gmail-inbox-php",
+  "description": "Gmail Inbox for PHP — the service descriptor, its faker, its webhook verification, one class per operation, and a fancy-flow-php executor per node. Plain HTTP on particle-academy/fancy-connector-core; no vendor SDK.",
+  "type": "library",
+  "keywords": [
+    "gmail_inbox",
+    "email",
+    "connector",
+    "api",
+    "fancy-ui",
+    "particle-academy"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/Fancy-Friends/gmail-inbox",
+  "support": {
+    "issues": "https://github.com/Fancy-Friends/gmail-inbox/issues",
+    "source": "https://github.com/Fancy-Friends/gmail-inbox"
+  },
+  "authors": [
+    {
+      "name": "Particle Academy",
+      "homepage": "https://github.com/Particle-Academy"
+    }
+  ],
+  "require": {
+    "php": "^8.4",
+    "particle-academy/fancy-connector-core": ">=0.4.0 <2.0"
+  },
+  "require-dev": {
+    "laravel/pint": "^1.26",
+    "pestphp/pest": "^3.0|^4.0"
+  },
+  "suggest": {
+    "particle-academy/fancy-flow-php": ">=0.51.0 <2.0 — runs this connector's nodes on a fancy-flow-php host (src/Flow/). Everything outside Flow\\ works without it."
+  },
+  "conflict": {
+    "particle-academy/fancy-flow-php": "<0.51.0 || >=2.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "ParticleAcademy\\GmailInbox\\": "packages/php/src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "ParticleAcademy\\GmailInbox\\Tests\\": "packages/php/tests/"
+    }
+  },
+  "scripts": {
+    "test": "pest --test-directory=packages/php/tests",
+    "lint": "find packages/php -name '*.php' -print0 | xargs -0 -n1 php -l",
+    "format": "pint"
+  },
+  "config": {
+    "sort-packages": true,
+    "allow-plugins": {
+      "pestphp/pest-plugin": true
+    }
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
+}

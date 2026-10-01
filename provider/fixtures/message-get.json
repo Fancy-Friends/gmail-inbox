@@ -1,0 +1,25 @@
+{
+  "$comment": "A single-part message (no attachments, no multipart tree) -- the simplest real shape, so an author sees headers and snippet before meeting payload.parts on a richer message. id echoes what was asked for, the same trap as every other provider's get fixture.",
+  "operation": "message_get",
+
+  "response": {
+    "id": { "$config": "id", "as": "string", "fallback": { "$fake": "hex", "length": 16 } },
+    "threadId": { "$fake": "hex", "length": 16 },
+    "labelIds": ["INBOX", "UNREAD", "IMPORTANT"],
+    "snippet": "Hi Ada, just confirming the design review is still on for Thursday at 2pm. Let me know if...",
+    "internalDate": "1790712000000",
+    "payload": {
+      "mimeType": "text/plain",
+      "headers": [
+        { "name": "From", "value": "Grace Hopper <grace@example.test>" },
+        { "name": "To", "value": "Ada Lovelace <ada@example.test>" },
+        { "name": "Subject", "value": "Re: Design review Thursday" },
+        { "name": "Date", "value": "Tue, 29 Sep 2026 14:03:00 -0400" }
+      ],
+      "body": {
+        "size": 612,
+        "data": { "$fake": "id", "prefix": "base64url_body" }
+      }
+    }
+  }
+}

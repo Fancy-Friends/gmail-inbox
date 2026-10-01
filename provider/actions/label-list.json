@@ -1,0 +1,35 @@
+{
+  "$comment": "users.labels.list -> GET gmail/v1/users/{userId}/labels, response ListLabelsResponse. Read from the discovery document 2026-10-01.",
+  "operation": "label_list",
+  "kind": "label_list",
+  "title": "List Gmail labels",
+  "description": "List every label on the mailbox, system and user-created.",
+  "summary": "list labels",
+  "docs": "https://developers.google.com/workspace/gmail/api/reference/rest/v1/users.labels/list",
+  "sideEffects": "none",
+
+  "request": {
+    "method": "GET",
+    "path": "/gmail/v1/users/{userId}/labels"
+  },
+
+  "config": [
+    {
+      "type": "text",
+      "key": "userId",
+      "label": "Mailbox",
+      "required": true,
+      "default": "me",
+      "send": { "in": "path", "as": "userId", "value": "string" }
+    }
+  ],
+
+  "outputShape": [
+    { "path": "data.labels", "type": "array", "description": "Each with id, name and type (system or user). messagesTotal/messagesUnread/threadsTotal/threadsUnread are part of Label's schema but not confirmed present on every list row -- read one label with labels.get if a count comes back missing." }
+  ],
+
+  "contract": {
+    "sends": ["userId"],
+    "reads": ["labels"]
+  }
+}

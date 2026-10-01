@@ -1,0 +1,12 @@
+{
+  "$comment": "Two rows -- Gmail's list endpoint has never returned anything but { id, threadId } per message, by design.",
+  "operation": "message_list",
+
+  "response": {
+    "messages": [
+      { "id": { "$fake": "hex", "length": 16 }, "threadId": { "$fake": "hex", "length": 16 } },
+      { "id": { "$fake": "hex", "length": 16 }, "threadId": { "$fake": "hex", "length": 16 } }
+    ],
+    "resultSizeEstimate": 2
+  }
+}

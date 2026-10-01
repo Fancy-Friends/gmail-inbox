@@ -1,0 +1,77 @@
+{
+  "$comment": "users.messages.list -> GET gmail/v1/users/{userId}/messages, response ListMessagesResponse. Read from the discovery document 2026-10-01. Each row is an id/threadId pair only -- Gmail's list endpoint has never returned subject/from/snippet, by design, so a host reads message_get per id for content.",
+  "operation": "message_list",
+  "kind": "message_list",
+  "title": "List Gmail messages",
+  "description": "List message ids matching a search, newest first.",
+  "summary": "list messages",
+  "docs": "https://developers.google.com/workspace/gmail/api/reference/rest/v1/users.messages/list",
+  "sideEffects": "none",
+
+  "request": {
+    "method": "GET",
+    "path": "/gmail/v1/users/{userId}/messages"
+  },
+
+  "config": [
+    {
+      "type": "text",
+      "key": "userId",
+      "label": "Mailbox",
+      "required": true,
+      "default": "me",
+      "description": "`me` is the connected account and is almost always what you want.",
+      "send": { "in": "path", "as": "userId", "value": "string" }
+    },
+    {
+      "type": "text",
+      "key": "q",
+      "label": "Search",
+      "description": "Gmail's own search syntax, exactly as typed into the Gmail search box -- e.g. \"from:ada@example.test has:attachment newer_than:7d\". Leave blank to list everything.",
+      "send": { "in": "query", "as": "q", "value": "string", "omitEmpty": true }
+    },
+    {
+      "type": "text",
+      "key": "labelId",
+      "label": "Label ID",
+      "description": "Only messages with this label -- e.g. INBOX, or a label_list id. Gmail's own query parameter accepts several, repeated; this connector offers one for now -- combine more in the search field above instead, using Gmail's own label: search operator.",
+      "send": { "in": "query", "as": "labelIds", "value": "string", "omitEmpty": true }
+    },
+    {
+      "type": "switch",
+      "key": "includeSpamTrash",
+      "label": "Include spam and trash",
+      "default": false,
+      "send": { "in": "query", "as": "includeSpamTrash", "value": "boolean" }
+    },
+    {
+      "type": "number",
+      "key": "maxResults",
+      "label": "Page size",
+      "min": 1,
+      "max": 500,
+      "default": 100,
+      "description": "Gmail's own maximum is 500.",
+      "send": { "in": "query", "as": "maxResults", "value": "integer", "min": 1, "max": 500, "default": 100 }
+    },
+    {
+      "type": "text",
+      "key": "pageToken",
+      "label": "Page token",
+      "description": "From a previous page's nextPageToken.",
+      "send": { "in": "query", "as": "pageToken", "value": "string", "omitEmpty": true }
+    }
+  ],
+
+  "outputShape": [
+    { "path": "data.messages", "type": "array", "description": "Each row is { id, threadId } only. Read a message's content with message_get." },
+    { "path": "data.nextPageToken", "type": "string", "description": "Present when there is another page." },
+    { "path": "data.resultSizeEstimate", "type": "number", "description": "Gmail's own word for it: an ESTIMATE, not an exact count." },
+    { "path": "mode", "type": "string", "description": "Which estate this ran against. Google has no sandbox, so: fake or live." }
+  ],
+
+  "contract": {
+    "sends": ["userId", "q", "labelIds", "includeSpamTrash", "maxResults", "pageToken"],
+    "reads": ["messages", "nextPageToken", "resultSizeEstimate"]
+  }
+}
