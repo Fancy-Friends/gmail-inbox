@@ -58,7 +58,7 @@
     "packages/py/pyproject.toml": "c59b9f8fb22cdb50d47f401b7c974015426bb3305b0e680347e495fa5b8a4e94",
     "packages/py/src/fancy_gmail_inbox/__init__.py": "d826ae5dcc4f2c46b940a12c192f96e450f3830eefc1cba0313c4cf797354976",
     "packages/py/src/fancy_gmail_inbox/_fake.py": "68a0a4f185d478ffa85d87b46183f4753baea7fcf1be3d4ed68cbd6e826a623e",
-    "packages/py/src/fancy_gmail_inbox/_runtime.py": "0a503c0dddf60f83fef9aab16db33b64d38f9fbde9d179d09cfd3f20092e7a1d",
+    "packages/py/src/fancy_gmail_inbox/_runtime.py": "830f42a046b875d7701cc7fa1193edcc41c47e984ea4475efc54acd1091debd9",
     "packages/py/src/fancy_gmail_inbox/actions/__init__.py": "e44dafc7a53fd2a59fe7123382a240d370176ee2831040435c36d9f7729a8008",
     "packages/py/src/fancy_gmail_inbox/actions/label_list.py": "3540deb7c012a0b2894a3c7b8f7e8490ae7e5b816decb3e0afc9b264a23b46a6",
     "packages/py/src/fancy_gmail_inbox/actions/message_get.py": "055c11611e47af8fe25bdbbd710b45a0ad623390337ea1ce36fbd31cda248ddd",
