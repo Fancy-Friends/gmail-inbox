@@ -41,7 +41,7 @@ A Gmail Inbox connection holds 6 values.
 
 | Field | Scope | Secret | Where it comes from |
 |---|---|---|---|
-| **OAuth client ID** | per installation | not secret | A DIFFERENT OAuth app than `gmail`'s, from Google Cloud Console -> APIs & Services -> Credentials. This one requests a restricted scope and carries Google's annual CASA assessment; `gmail`'s does not. Do not reuse the same client for both. |
+| **OAuth client ID** | per installation | not secret | From Google Cloud Console -> APIs & Services -> Credentials. ONE value for the whole installation. This connector requests a RESTRICTED scope, and Google verifies per OAuth client: sharing one client with the other Google connectors (one consent, one grant) puts every Google feature behind the annual CASA assessment; a separate client for this connector keeps it here alone, at the cost of a second consent. Your choice. |
 | **OAuth client secret** | per installation | **secret** | The client secret for the same OAuth app. One value for the whole installation. |
 | **Access token** | per connected account | **secret** | Per connected Google account, and it expires after ONE HOUR. The host refreshes it with the refresh token. |
 | **Refresh token** | per connected account | **secret** | Per connected Google account. Google issues one only when the consent request asks for offline access; without it the connection dies within the hour. |
@@ -56,6 +56,13 @@ Gmail Inbox uses OAuth2 (authorization_code). The package DECLARES the exchange;
 - **Token URL** — https://oauth2.googleapis.com/token
 - **Scopes** — `https://www.googleapis.com/auth/gmail.readonly`
 - **Access token lifetime** — 3600 seconds (1 hours). A host that never refreshes works all afternoon and is broken by morning.
+
+**One consent grant, shared** (`grant: "google"`). Every connector declaring the same grant can run on ONE OAuth client, with one consent and one refresh token per person.
+
+- **Authorize with** `access_type=offline`, `include_granted_scopes=true`. Ask for a feature's scopes when it is first used; the new token covers every scope granted before. A refresh token comes back only on the FIRST exchange, so keep the stored one when an exchange returns none.
+- **Revoke** — POST https://oauth2.googleapis.com/revoke with `token`. **It removes the WHOLE grant**: every connector sharing it, not only this one. A per-feature disconnect stops using that feature's scopes locally; only a full disconnect revokes.
+- **Identify the account by `sub`**: request `openid`, then verify the token response's id_token (issuer `https://accounts.google.com` or `accounts.google.com`, keys at https://www.googleapis.com/oauth2/v3/certs, audience = `clientId`). Never key a connection by email.
+- **Restricted scopes**: `https://www.googleapis.com/auth/gmail.readonly`. Verification is per OAuth client, so sharing one client with the rest of the grant puts every feature behind the provider's restricted-scope assessment; a separate client keeps it on this connector alone.
 
 The refresh tokens do **not** rotate: the same one is reusable, so a refresh may safely be retried and may run concurrently. Stated rather than assumed, because the opposite — a provider that spends the token and revokes the grant on a replay — looks identical until it happens.
 

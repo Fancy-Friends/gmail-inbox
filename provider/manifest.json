@@ -5,7 +5,7 @@
   "title": "Gmail Inbox",
   "domain": "email",
   "docs": "https://developers.google.com/workspace/gmail/api/reference/rest/v1/users.messages/get",
-  "$splitComment": "A SEPARATE connector from `gmail`, not a scope added to it, by deliberate design (Tynn #19, 2026-09-30, Fancy's compliance audit): gmail.readonly is a RESTRICTED Google OAuth scope, requiring an annual third-party CASA security assessment on the app that requests it. Google's verification is per OAUTH CLIENT -- the whole app, not per scope -- and this estate already isolates credentials per connector (each provider requires its own distinct clientId/clientSecret). Widening `gmail`'s own client to request gmail.readonly would attach that recurring assessment to every existing send-only consumer, none of whom asked for it. A second connector with its own OAuth client puts the assessment only on the surface that needs it, opted into deliberately -- the same shape this estate already uses for Microsoft Outlook vs Microsoft Teams: overlapping platform, distinct API surface, distinct credential story.",
+  "$splitComment": "A SEPARATE connector from `gmail`, not a scope added to it, by deliberate design (Tynn #19, 2026-09-30, Fancy's compliance audit): gmail.readonly is a RESTRICTED Google OAuth scope, requiring an annual third-party CASA security assessment on the app that requests it. Google's verification is per OAUTH CLIENT -- the whole app, not per scope --. Widening `gmail`'s own client to request gmail.readonly would attach that recurring assessment to every existing send-only consumer, none of whom asked for it. A second connector with its own OAuth client puts the assessment only on the surface that needs it, opted into deliberately. Since 2026-11-08 the connectors also declare one shared Google grant (oauth.grant); a host MAY run this connector on the same client as the rest, and restrictedScopes says what that costs. The split is the same shape this estate already uses for Microsoft Outlook vs Microsoft Teams: overlapping platform, distinct API surface, distinct credential story.",
   "auth": "oauth2",
   "requires": [
     "accessToken",
@@ -29,6 +29,19 @@
     "$refreshTokenRotates": "Reusable, the same Google identity-platform fact `gmail` already verified: a refresh response carries no new refresh_token, and Google's own expiry rule (\"not used for six months\") is a statement about a token that is PERSISTED AND REPLAYED, which rotation would contradict.",
     "refreshTokenRotates": false,
     "accessTokenTtlSeconds": 3600,
+    "$grantComment": "ONE consent grant shared by every Google connector (MOIC #1, 2026-11-08). A host may run them all on one OAuth client: request each feature's scopes when it is first used, with include_granted_scopes=true, and Google's new token covers every scope granted before. A refresh token comes back only on the FIRST code exchange with access_type=offline, so keep the stored one when an exchange returns none. Revoking ANY token removes the person's WHOLE grant -- every Google connector, not this one -- so a per-feature disconnect stops using the scope locally and only a full Google disconnect revokes. Identify the account by the id_token's sub (request openid; verify iss and aud = clientId), never by email.",
+    "grant": "google",
+    "authorizeParams": { "access_type": "offline", "include_granted_scopes": "true" },
+    "revoke": { "url": "https://oauth2.googleapis.com/revoke", "param": "token", "scope": "grant" },
+    "identity": {
+      "scope": "openid",
+      "claim": "sub",
+      "issuers": ["https://accounts.google.com", "accounts.google.com"],
+      "jwksUrl": "https://www.googleapis.com/oauth2/v3/certs",
+      "audienceCredential": "clientId"
+    },
+    "$restrictedScopesComment": "Google's RESTRICTED tier puts the whole OAuth client under verification and an annual CASA assessment. gmail.readonly is restricted: a host sharing one client across Google connectors puts every feature behind that assessment; a separate client for this connector keeps it here alone. The host's choice.",
+    "restrictedScopes": ["https://www.googleapis.com/auth/gmail.readonly"],
     "$scopeComment": "gmail.readonly -- RESTRICTED tier, requiring Google's annual CASA assessment on this connector's own OAuth client (see $splitComment above). It is still the narrowest scope that can read a message, a thread or a label: Gmail offers no finer-grained read scope for message CONTENT (gmail.metadata reads headers only, never the body). gmail.labels is non-sensitive on its own, but bundling it here buys nothing -- requesting gmail.readonly already puts the client in the restricted tier, so a second scope for labels alone would cost a second consent-screen line for zero compliance benefit.",
     "$comment": "The package DECLARES the dance and does not perform it. Google's access tokens last ONE HOUR, so refreshToken is required rather than optional -- and Google only issues one when the consent request asked for offline access."
   },
@@ -45,7 +58,7 @@
       "label": "OAuth client ID",
       "scope": "provider",
       "secret": false,
-      "help": "A DIFFERENT OAuth app than `gmail`'s, from Google Cloud Console -> APIs & Services -> Credentials. This one requests a restricted scope and carries Google's annual CASA assessment; `gmail`'s does not. Do not reuse the same client for both."
+      "help": "From Google Cloud Console -> APIs & Services -> Credentials. ONE value for the whole installation. This connector requests a RESTRICTED scope, and Google verifies per OAuth client: sharing one client with the other Google connectors (one consent, one grant) puts every Google feature behind the annual CASA assessment; a separate client for this connector keeps it here alone, at the cost of a second consent. Your choice."
     },
     {
       "key": "clientSecret",
