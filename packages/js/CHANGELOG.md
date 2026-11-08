@@ -12,6 +12,24 @@ derived — somebody has to write what changed — but writing it in the
 provider repo would be a hand-edit that `.weaver.json` flags and the next
 sync destroys.
 
+## [0.4.1] — 2026-11-08
+
+### Fixed
+
+- **The Laravel config's environment variable names now split camelCase**,
+  as documented. **Consumer action: none.** The old unsplit names are still
+  read as a fallback, so an app that set them keeps working; the new names
+  are preferred.
+
+  | Preferred | Still read |
+  |---|---|
+  | `GMAIL_INBOX_CLIENT_ID` | `GMAIL_INBOX_CLIENTID` |
+  | `GMAIL_INBOX_CLIENT_SECRET` | `GMAIL_INBOX_CLIENTSECRET` |
+  | `GMAIL_INBOX_ACCESS_TOKEN` | `GMAIL_INBOX_ACCESSTOKEN` |
+  | `GMAIL_INBOX_REFRESH_TOKEN` | `GMAIL_INBOX_REFRESHTOKEN` |
+  | `GMAIL_INBOX_PUSH_AUDIENCE` | `GMAIL_INBOX_PUSHAUDIENCE` |
+  | `GMAIL_INBOX_PUSH_SERVICE_ACCOUNT` | `GMAIL_INBOX_PUSHSERVICEACCOUNT` |
+
 ## [0.4.0] — 2026-11-08
 
 ### Added
