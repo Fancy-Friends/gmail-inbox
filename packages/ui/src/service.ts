@@ -77,7 +77,7 @@ export const GMAIL_INBOX_CREDENTIALS = [
     "label": "OAuth client ID",
     "scope": "provider",
     "secret": false,
-    "help": "A DIFFERENT OAuth app than `gmail`'s, from Google Cloud Console -> APIs & Services -> Credentials. This one requests a restricted scope and carries Google's annual CASA assessment; `gmail`'s does not. Do not reuse the same client for both."
+    "help": "From Google Cloud Console -> APIs & Services -> Credentials. ONE value for the whole installation. This connector requests a RESTRICTED scope, and Google verifies per OAuth client: sharing one client with the other Google connectors (one consent, one grant) puts every Google feature behind the annual CASA assessment; a separate client for this connector keeps it here alone, at the cost of a second consent. Your choice."
   },
   {
     "key": "clientSecret",
@@ -135,6 +135,13 @@ export const GMAIL_INBOX_CREDENTIALS = [
  * safely be retried and may run concurrently. That is stated rather than
  * assumed because the opposite — a provider that spends the token and revokes
  * the grant on a replay — looks identical until it happens.
+ *
+ * Its consent grant is SHARED with every connector declaring grant "google":
+ * one OAuth client, one consent and one refresh token per person, scopes added
+ * as features are first used (authorizeParams). Revoking removes the WHOLE
+ * grant, so only a full disconnect revokes; a per-feature disconnect stops
+ * using the scope locally. Identify the account by the id_token's sub, never
+ * by email.
  */
 export const GMAIL_INBOX_OAUTH = {
   "flow": "authorization_code",
@@ -146,7 +153,30 @@ export const GMAIL_INBOX_OAUTH = {
   "accessTokenCredential": "accessToken",
   "refreshTokenCredential": "refreshToken",
   "refreshTokenRotates": false,
-  "accessTokenTtlSeconds": 3600
+  "accessTokenTtlSeconds": 3600,
+  "grant": "google",
+  "authorizeParams": {
+    "access_type": "offline",
+    "include_granted_scopes": "true"
+  },
+  "revoke": {
+    "url": "https://oauth2.googleapis.com/revoke",
+    "param": "token",
+    "scope": "grant"
+  },
+  "identity": {
+    "scope": "openid",
+    "claim": "sub",
+    "issuers": [
+      "https://accounts.google.com",
+      "accounts.google.com"
+    ],
+    "jwksUrl": "https://www.googleapis.com/oauth2/v3/certs",
+    "audienceCredential": "clientId"
+  },
+  "restrictedScopes": [
+    "https://www.googleapis.com/auth/gmail.readonly"
+  ]
 } as const;
 
 /** Build a Gmail Inbox node's connector metadata from the operation it performs. */
