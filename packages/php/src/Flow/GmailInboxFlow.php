@@ -39,10 +39,14 @@ final class GmailInboxFlow
 {
     /** @var list<class-string> */
     public const EXECUTORS = [
+        HistoryListExecutor::class,
         LabelListExecutor::class,
+        MailboxStopExecutor::class,
+        MailboxWatchExecutor::class,
         MessageGetExecutor::class,
         MessageListExecutor::class,
         ThreadGetExecutor::class,
+        MessageReceivedTriggerExecutor::class,
     ];
 
     /**

@@ -21,7 +21,10 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { PreparedRequest } from "@particle-academy/fancy-connector-core";
 
+import { gmailInboxHistoryList } from "../src/actions/history-list.js";
 import { gmailInboxLabelList } from "../src/actions/label-list.js";
+import { gmailInboxMailboxStop } from "../src/actions/mailbox-stop.js";
+import { gmailInboxMailboxWatch } from "../src/actions/mailbox-watch.js";
 import { gmailInboxMessageGet } from "../src/actions/message-get.js";
 import { gmailInboxMessageList } from "../src/actions/message-list.js";
 import { gmailInboxThreadGet } from "../src/actions/thread-get.js";
@@ -44,8 +47,43 @@ const CREDENTIALS = {
   "clientId": "test_clientId",
   "clientSecret": "test_clientSecret",
   "accessToken": "test_accessToken",
-  "refreshToken": "test_refreshToken"
+  "refreshToken": "test_refreshToken",
+  "pushAudience": "test_pushAudience",
+  "pushServiceAccount": "test_pushServiceAccount"
 };
+
+test("history_list sends GET /gmail/v1/users/{userId}/history", async () => {
+  const { seen, transport } = capture();
+
+  await gmailInboxHistoryList({
+    config: {
+      "userId": "example-userId",
+      "startHistoryId": "example-startHistoryId",
+      "historyTypes": "messageAdded",
+      "labelId": "example-labelId",
+      "maxResults": 500,
+      "pageToken": "example-pageToken"
+    },
+    credentials: CREDENTIALS,
+    mode: "live",
+    transport,
+  });
+
+  assert.equal(seen.length, 1);
+  assert.equal(seen[0]!.method, "GET");
+  assert.ok(new URL(seen[0]!.url).pathname.endsWith("/gmail/v1/users/example-userId/history"), seen[0]!.url);
+
+  assert.deepEqual(
+    Object.fromEntries(new URL(seen[0]!.url).searchParams),
+    {
+      "startHistoryId": "example-startHistoryId",
+      "historyTypes": "messageAdded",
+      "labelId": "example-labelId",
+      "maxResults": "500",
+      "pageToken": "example-pageToken"
+    },
+  );
+});
 
 test("label_list sends GET /gmail/v1/users/{userId}/labels", async () => {
   const { seen, transport } = capture();
@@ -67,6 +105,54 @@ test("label_list sends GET /gmail/v1/users/{userId}/labels", async () => {
     Object.fromEntries(new URL(seen[0]!.url).searchParams),
     {},
   );
+});
+
+test("mailbox_stop sends POST /gmail/v1/users/{userId}/stop", async () => {
+  const { seen, transport } = capture();
+
+  await gmailInboxMailboxStop({
+    config: {
+      "userId": "example-userId"
+    },
+    credentials: CREDENTIALS,
+    mode: "live",
+    transport,
+  });
+
+  assert.equal(seen.length, 1);
+  assert.equal(seen[0]!.method, "POST");
+  assert.ok(new URL(seen[0]!.url).pathname.endsWith("/gmail/v1/users/example-userId/stop"), seen[0]!.url);
+
+  assert.deepEqual(JSON.parse(String(seen[0]!.body ?? "{}")), {});
+});
+
+test("mailbox_watch sends POST /gmail/v1/users/{userId}/watch", async () => {
+  const { seen, transport } = capture();
+
+  await gmailInboxMailboxWatch({
+    config: {
+      "userId": "example-userId",
+      "topicName": "  Example-topicName  ",
+      "labelIds": "labelIds-one, labelIds-two",
+      "labelFilterBehavior": "include"
+    },
+    credentials: CREDENTIALS,
+    mode: "live",
+    transport,
+  });
+
+  assert.equal(seen.length, 1);
+  assert.equal(seen[0]!.method, "POST");
+  assert.ok(new URL(seen[0]!.url).pathname.endsWith("/gmail/v1/users/example-userId/watch"), seen[0]!.url);
+
+  assert.deepEqual(JSON.parse(String(seen[0]!.body ?? "{}")), {
+    "topicName": "Example-topicName",
+    "labelIds": [
+      "labelIds-one",
+      "labelIds-two"
+    ],
+    "labelFilterBehavior": "include"
+  });
 });
 
 test("message_get sends GET /gmail/v1/users/{userId}/messages/{id}", async () => {
@@ -155,9 +241,14 @@ test("thread_get sends GET /gmail/v1/users/{userId}/threads/{id}", async () => {
 test("the credential is placed the way the provider wants it", async () => {
   const { seen, transport } = capture();
 
-  await gmailInboxLabelList({
+  await gmailInboxHistoryList({
     config: {
-      "userId": "example-userId"
+      "userId": "example-userId",
+      "startHistoryId": "example-startHistoryId",
+      "historyTypes": "messageAdded",
+      "labelId": "example-labelId",
+      "maxResults": 500,
+      "pageToken": "example-pageToken"
     },
     credentials: CREDENTIALS,
     mode: "live",
@@ -174,8 +265,14 @@ test("a missing required field is refused BEFORE anything is sent", async () => 
   const { seen, transport } = capture();
 
   await assert.rejects(
-    gmailInboxLabelList({
-      config: {},
+    gmailInboxHistoryList({
+      config: {
+        "startHistoryId": "example-startHistoryId",
+        "historyTypes": "messageAdded",
+        "labelId": "example-labelId",
+        "maxResults": 500,
+        "pageToken": "example-pageToken"
+      },
       credentials: CREDENTIALS,
       mode: "live",
       transport,

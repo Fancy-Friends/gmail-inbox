@@ -23,6 +23,29 @@
 
 import type { ConnectorFaker, FakeRequest } from "@particle-academy/fancy-connector-core";
 
+function fakeHistoryList({ config, fake }: FakeRequest): unknown {
+  return {
+    "history": [
+      {
+        "id": "1234567891",
+        "messagesAdded": [
+          {
+            "message": {
+              "id": fake.hex(16),
+              "threadId": fake.hex(16),
+              "labelIds": [
+                "INBOX",
+                "UNREAD",
+              ],
+            },
+          },
+        ],
+      },
+    ],
+    "historyId": "1234567891",
+  };
+}
+
 function fakeLabelList({ config, fake }: FakeRequest): unknown {
   return {
     "labels": [
@@ -57,6 +80,17 @@ function fakeLabelList({ config, fake }: FakeRequest): unknown {
         "threadsUnread": 1,
       },
     ],
+  };
+}
+
+function fakeMailboxStop({ config, fake }: FakeRequest): unknown {
+  return {};
+}
+
+function fakeMailboxWatch({ config, fake }: FakeRequest): unknown {
+  return {
+    "historyId": "1234567890",
+    "expiration": "1767312000000",
   };
 }
 
@@ -193,10 +227,33 @@ function fakeThreadGet({ config, fake }: FakeRequest): unknown {
   };
 }
 
+function fakeMessageReceived({ config, fake }: FakeRequest): unknown {
+  return {
+    "subscription": "projects/my-project/subscriptions/gmail-push",
+    "messageId": Array.from({ length: 16 }, () => fake.int(0, 9)).join(""),
+    "publishTime": "2026-11-08T09:00:00.000Z",
+    "attributes": {},
+    "deliveryAttempt": null,
+    "data": {
+      "emailAddress": "user@example.test",
+      "historyId": 1234567891,
+    },
+  };
+}
+
 export const gmailInboxFaker: ConnectorFaker = (operation, request) => {
   switch (operation) {
+    case "history_list":
+      return fakeHistoryList(request);
+
     case "label_list":
       return fakeLabelList(request);
+
+    case "mailbox_stop":
+      return fakeMailboxStop(request);
+
+    case "mailbox_watch":
+      return fakeMailboxWatch(request);
 
     case "message_get":
       return fakeMessageGet(request);
@@ -206,6 +263,9 @@ export const gmailInboxFaker: ConnectorFaker = (operation, request) => {
 
     case "thread_get":
       return fakeThreadGet(request);
+
+    case "message_received":
+      return fakeMessageReceived(request);
 
     default:
       // A faker asked for an operation it has no shape for must SAY so. Making

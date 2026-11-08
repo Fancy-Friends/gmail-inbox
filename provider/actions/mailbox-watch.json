@@ -1,0 +1,112 @@
+{
+  "$comment": "users.watch -> POST gmail/v1/users/{userId}/watch {topicName, labelIds, labelFilterBehavior} -> {historyId, expiration}. Read from Google's reference 2026-11-07. Accepts gmail.readonly. The topic must already exist in the Google Cloud project that owns the OAuth client (its project id 'must exactly match your Google developer project id'), with publish granted to gmail-api-push@system.gserviceaccount.com.",
+  "operation": "mailbox_watch",
+  "kind": "mailbox_watch",
+  "title": "Watch a Gmail mailbox",
+  "description": "Start (or renew) push notifications for a mailbox to a Cloud Pub/Sub topic.",
+  "summary": "watch a mailbox",
+  "docs": "https://developers.google.com/workspace/gmail/api/reference/rest/v1/users/watch",
+  "sideEffects": "idempotent",
+  "$sideEffectsComment": "Calling watch again renews the same watch (Google: 'Call watch again before this time to renew the watch'), so a retry does no harm.",
+  "request": {
+    "method": "POST",
+    "path": "/gmail/v1/users/{userId}/watch",
+    "encoding": "json"
+  },
+  "config": [
+    {
+      "type": "text",
+      "key": "userId",
+      "label": "Mailbox",
+      "required": true,
+      "default": "me",
+      "description": "`me` is the connected account and is almost always what you want.",
+      "send": {
+        "in": "path",
+        "as": "userId",
+        "value": "string"
+      }
+    },
+    {
+      "type": "text",
+      "key": "topicName",
+      "label": "Pub/Sub topic",
+      "required": true,
+      "placeholder": "projects/my-project/topics/gmail-push",
+      "description": "The full topic name, in YOUR app's own Google Cloud project: Google requires its project id to match the project whose OAuth client makes this call. One topic serves every mailbox.",
+      "send": {
+        "in": "body",
+        "as": "topicName",
+        "value": "string",
+        "transform": "trim"
+      }
+    },
+    {
+      "type": "text",
+      "key": "labelIds",
+      "label": "Only these labels",
+      "description": "Comma-separated label ids to restrict notifications to (e.g. INBOX). Blank: every change is pushed.",
+      "send": {
+        "in": "body",
+        "as": "labelIds",
+        "value": "list",
+        "separator": ",",
+        "omitEmpty": true
+      }
+    },
+    {
+      "type": "select",
+      "key": "labelFilterBehavior",
+      "label": "Label filter",
+      "description": "Whether the labels above are the ONLY ones notified (include) or the ones NOT notified (exclude).",
+      "options": [
+        {
+          "value": "include",
+          "label": "Only these labels"
+        },
+        {
+          "value": "exclude",
+          "label": "Every label except these"
+        }
+      ],
+      "send": {
+        "in": "body",
+        "as": "labelFilterBehavior",
+        "value": "string",
+        "omitEmpty": true
+      }
+    }
+  ],
+  "defaultConfig": {
+    "mode": "auto"
+  },
+  "outputShape": [
+    {
+      "path": "data.historyId",
+      "type": "string",
+      "description": "The mailbox's CURRENT history id: seed the trigger's stored cursor from it."
+    },
+    {
+      "path": "data.expiration",
+      "type": "string",
+      "description": "When Gmail stops pushing, in epoch MILLISECONDS. Renew before it; Google recommends daily."
+    },
+    {
+      "path": "mode",
+      "type": "string",
+      "description": "Which estate this ran against. Google has no sandbox, so: fake or live."
+    }
+  ],
+  "contract": {
+    "sends": [
+      "userId",
+      "topicName",
+      "labelIds",
+      "labelFilterBehavior"
+    ],
+    "reads": [
+      "historyId",
+      "expiration"
+    ]
+  }
+}

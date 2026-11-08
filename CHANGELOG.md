@@ -12,6 +12,41 @@ derived — somebody has to write what changed — but writing it in the
 provider repo would be a hand-edit that `.weaver.json` flags and the next
 sync destroys.
 
+## [0.2.0] — 2026-11-08
+
+### Added
+
+- **`message_received`: a trigger for new Gmail mail, still read-only**
+  (`gmail.readonly` is the only scope). `mailbox_watch` makes Gmail publish
+  mailbox changes to a Cloud Pub/Sub topic in YOUR app's own Google Cloud
+  project, and a push subscription delivers each change to your host.
+  - **Every push is verified before anything reads it.** It carries a
+    Google-signed token in `Authorization`, checked for Google's issuer, the
+    subscription's audience (`pushAudience`), and the push service account
+    with `email_verified` true (`pushServiceAccount`). The service-account
+    check is what refuses a stranger's subscription aimed at your URL.
+  - **Routing.** The Pub/Sub envelope is unwrapped, then the push is routed by
+    `emailAddress`, only after verification. One topic serves every mailbox.
+  - **What arrives.** A push carries only the mailbox's NEW position, so the
+    trigger reads `history.list` from the cursor YOUR HOST stored. It reads
+    every page and publishes the changes under `history` with `cursor: {used,
+    next}`. Your host persists `cursor.next` when a run succeeds.
+  - **Received mail only, by default:** `labelId: INBOX` and `historyTypes:
+    messageAdded`, so no sent mail or drafts. Widen either in the trigger's
+    config.
+  - **A lapsed cursor** (Gmail's 404) or more than 20 pages fails by name, as
+    `cursor-expired` or `cursor-overflow`. Each carries a bounded resync query
+    (`newer_than:7d`; `resyncWindowDays` sets it, default 7). Watch again
+    first, then list with that query. The mailbox is never fully re-pulled.
+  - **The watch is a lease:** Gmail's `expiration` is in epoch milliseconds,
+    renewed by watching again, a day early. Google requires at least once
+    every 7 days and recommends daily.
+  - **Read state is never changed.**
+
+  New actions: `mailbox_watch`, `mailbox_stop` and `history_list`. New
+  credentials: `pushAudience` and `pushServiceAccount`, needed only for the
+  trigger. Requires fancy-connector-core 0.14.0.
+
 ## [0.1.0] — 2026-10-01
 
 ### Added

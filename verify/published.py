@@ -16,6 +16,30 @@ from fancy_gmail_inbox.faker import respond
 
 GOLDENS = [
     {
+        "operation": "history_list",
+        "config": {},
+        "expected": {
+            "history": [
+                {
+                    "id": "1234567891",
+                    "messagesAdded": [
+                        {
+                            "message": {
+                                "id": "c54cffbc0dd10ec1",
+                                "threadId": "ad2e20654d742a74",
+                                "labelIds": [
+                                    "INBOX",
+                                    "UNREAD",
+                                ],
+                            },
+                        },
+                    ],
+                },
+            ],
+            "historyId": "1234567891",
+        },
+    },
+    {
         "operation": "label_list",
         "config": {},
         "expected": {
@@ -51,6 +75,19 @@ GOLDENS = [
                     "threadsUnread": 1,
                 },
             ],
+        },
+    },
+    {
+        "operation": "mailbox_stop",
+        "config": {},
+        "expected": {},
+    },
+    {
+        "operation": "mailbox_watch",
+        "config": {},
+        "expected": {
+            "historyId": "1234567890",
+            "expiration": "1767312000000",
         },
     },
     {
@@ -196,6 +233,25 @@ GOLDENS = [
                     },
                 },
             ],
+        },
+    },
+    {
+        "operation": "message_received",
+        "config": {
+            "resyncWindowDays": 7,
+            "labelId": "INBOX",
+            "historyTypes": "messageAdded",
+        },
+        "expected": {
+            "subscription": "projects/my-project/subscriptions/gmail-push",
+            "messageId": "3998444640442585",
+            "publishTime": "2026-11-08T09:00:00.000Z",
+            "attributes": {},
+            "deliveryAttempt": None,
+            "data": {
+                "emailAddress": "user@example.test",
+                "historyId": 1234567891,
+            },
         },
     },
 ]

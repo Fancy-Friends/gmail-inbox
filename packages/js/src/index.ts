@@ -21,7 +21,11 @@
 
 export * from "./service.js";
 export * from "./faker.js";
+export * from "./actions/history-list.js";
 export * from "./actions/label-list.js";
+export * from "./actions/mailbox-stop.js";
+export * from "./actions/mailbox-watch.js";
 export * from "./actions/message-get.js";
 export * from "./actions/message-list.js";
 export * from "./actions/thread-get.js";
+export * from "./triggers/message-received.js";

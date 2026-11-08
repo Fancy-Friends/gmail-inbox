@@ -1,0 +1,46 @@
+{
+  "$comment": "users.stop -> POST gmail/v1/users/{userId}/stop. 'The request body must be empty'; 'If successful, the response body is an empty JSON object.' Read from Google's reference 2026-11-07. Accepts gmail.readonly.",
+  "operation": "mailbox_stop",
+  "kind": "mailbox_stop",
+  "title": "Stop watching a Gmail mailbox",
+  "description": "Turn off push notifications for a mailbox.",
+  "summary": "stop watching",
+  "docs": "https://developers.google.com/workspace/gmail/api/reference/rest/v1/users/stop",
+  "sideEffects": "idempotent",
+  "request": {
+    "method": "POST",
+    "path": "/gmail/v1/users/{userId}/stop",
+    "encoding": "json"
+  },
+  "config": [
+    {
+      "type": "text",
+      "key": "userId",
+      "label": "Mailbox",
+      "required": true,
+      "default": "me",
+      "description": "`me` is the connected account and is almost always what you want.",
+      "send": {
+        "in": "path",
+        "as": "userId",
+        "value": "string"
+      }
+    }
+  ],
+  "defaultConfig": {
+    "mode": "auto"
+  },
+  "outputShape": [
+    {
+      "path": "mode",
+      "type": "string",
+      "description": "Which estate this ran against. Google has no sandbox, so: fake or live."
+    }
+  ],
+  "contract": {
+    "sends": [
+      "userId"
+    ],
+    "reads": []
+  }
+}

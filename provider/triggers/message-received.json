@@ -1,0 +1,166 @@
+{
+  "$comment": "Gmail push: users.watch publishes mailbox changes to a Cloud Pub/Sub topic; a PUSH subscription delivers each to the host with a Google-signed OIDC token in Authorization (Pub/Sub, read 2026-11-01). The body carries only {emailAddress, historyId}, the mailbox's NEW position, so the trigger reads history.list from the cursor the HOST stored (core 0.14.0). Each mailbox is capped at one notification per second, excess dropped, and 'notifications might be delayed or dropped', so a host also reads after a quiet period.",
+  "operation": "message_received",
+  "kind": "message_received_trigger",
+  "title": "Gmail message received",
+  "description": "Start when new mail arrives in a watched mailbox, with every new message since the last run.",
+  "summary": "new mail",
+  "docs": "https://developers.google.com/workspace/gmail/api/guides/push",
+  "sideEffects": "none",
+  "delivery": "subscription",
+  "subscriptionTtl": 604800,
+  "$ttlComment": "Google: 'You must call the watch method at least once every 7 days'. It recommends daily, so the lease renews a day early and a host may renew more often.",
+  "setup": "In YOUR app's Google Cloud project (the one owning the OAuth client): create a Pub/Sub topic, grant publish on it to gmail-api-push@system.gserviceaccount.com, and create a PUSH subscription to the route your host mounts for this trigger, with authentication on (a service account you choose; the endpoint URL as the audience). Put that audience and service account on the connection as pushAudience and pushServiceAccount, and fetch Google's signing keys for verification. Then call mailbox_watch with the topic for each mailbox and store its historyId as the trigger's cursor (startHistoryId); renew the watch daily. ONE topic serves every mailbox: route each push by its emailAddress, and only after the token verifies, to a mailbox you watched; drop an unmapped address with a 2xx. Persist cursor.next when a run succeeds. On cursor-expired or cursor-overflow, watch again for a fresh historyId FIRST, then list with message_list using the resyncQuery, and match it against the mail you already handled. This trigger never changes read state.",
+  "verification": {
+    "scheme": "oidc-jwt",
+    "header": "Authorization",
+    "issuers": [
+      "https://accounts.google.com",
+      "accounts.google.com"
+    ],
+    "principalClaim": "email",
+    "verifiedClaim": "email_verified",
+    "audienceCredential": "pushAudience",
+    "principalCredential": "pushServiceAccount",
+    "$comment": "Google's documented claims for a push token: iss https://accounts.google.com or accounts.google.com, aud the subscription's audience, email the push service account, email_verified true. Google says to check the signature, the audience AND the email."
+  },
+  "decode": {
+    "kind": "pubsub-push"
+  },
+  "route": {
+    "by": "emailAddress",
+    "path": "data.emailAddress"
+  },
+  "$routeComment": "One topic in the app's project serves every mailbox, so the decoded payload's emailAddress is the only routing key, trustworthy only AFTER the token verifies and only when it maps to a mailbox the host watched.",
+  "subscription": {
+    "create": "mailbox_watch",
+    "renew": "mailbox_watch",
+    "stop": "mailbox_stop",
+    "expiresAtFrom": "expiration",
+    "expiresAtUnit": "epoch-ms",
+    "renewBeforeSeconds": 86400,
+    "$renewComment": "Renewing IS watching again (Google: 'Call watch again before this time to renew the watch')."
+  },
+  "then": {
+    "action": "history_list",
+    "using": {},
+    "as": "history",
+    "cursor": {
+      "param": "startHistoryId",
+      "seedFrom": "historyId",
+      "advanceFrom": "historyId",
+      "page": {
+        "param": "pageToken",
+        "from": "nextPageToken",
+        "collect": "history",
+        "maxPages": 20
+      },
+      "expiredStatus": 404,
+      "resyncQuery": "newer_than:{resyncWindowDays}d",
+      "$comment": "20 pages of up to 100 records is 2,000 changes per run before cursor-overflow; past that the host's bounded resync is the right answer. The resync never pulls a whole mailbox (MOIC, 2026-11-04)."
+    },
+    "fromConfig": {
+      "labelId": "labelId",
+      "historyTypes": "historyTypes"
+    },
+    "$comment": "Defaults INBOX + messageAdded: new RECEIVED mail only, never sent mail or drafts. A host widens either in the trigger's config."
+  },
+  "config": [
+    {
+      "type": "text",
+      "key": "startHistoryId",
+      "label": "Stored cursor",
+      "description": "The host fills this on every run from the cursor it stored: seeded from mailbox_watch's historyId, then cursor.next after each successful run."
+    },
+    {
+      "type": "number",
+      "key": "resyncWindowDays",
+      "label": "Resync window (days)",
+      "min": 1,
+      "max": 30,
+      "description": "How far back the host re-lists after a lapse, never the whole mailbox."
+    },
+    {
+      "type": "text",
+      "key": "labelId",
+      "label": "Only this label",
+      "description": "INBOX: received mail only. Blank: every label, including sent mail and drafts."
+    },
+    {
+      "type": "select",
+      "key": "historyTypes",
+      "label": "Only this kind of change",
+      "options": [
+        {
+          "value": "messageAdded",
+          "label": "New messages"
+        },
+        {
+          "value": "messageDeleted",
+          "label": "Deleted messages"
+        },
+        {
+          "value": "labelAdded",
+          "label": "Labels added"
+        },
+        {
+          "value": "labelRemoved",
+          "label": "Labels removed"
+        }
+      ]
+    }
+  ],
+  "defaultConfig": {
+    "mode": "auto",
+    "resyncWindowDays": 7,
+    "labelId": "INBOX",
+    "historyTypes": "messageAdded"
+  },
+  "outputShape": [
+    {
+      "path": "messageId",
+      "type": "string",
+      "description": "Pub/Sub's id for this push. The same push may be delivered more than once."
+    },
+    {
+      "path": "publishTime",
+      "type": "string",
+      "description": "When Pub/Sub published it."
+    },
+    {
+      "path": "data.emailAddress",
+      "type": "string",
+      "description": "The mailbox. The ONLY routing key, and only after verification."
+    },
+    {
+      "path": "data.historyId",
+      "type": "number",
+      "description": "The mailbox's new position, as Gmail pushed it. The read below starts from the STORED cursor, not this."
+    },
+    {
+      "path": "history.history",
+      "type": "array",
+      "description": "Every change since the stored cursor, all pages, oldest first. New mail is history[].messagesAdded[].message {id, threadId}: read each with message_get."
+    },
+    {
+      "path": "history.historyId",
+      "type": "string",
+      "description": "The mailbox's position after the read."
+    },
+    {
+      "path": "history.nextPageToken",
+      "type": "string",
+      "description": "Always absent here: every page was read."
+    },
+    {
+      "path": "cursor.used",
+      "type": "string",
+      "description": "The stored cursor this read started from."
+    },
+    {
+      "path": "cursor.next",
+      "type": "string",
+      "description": "The cursor to store once this run succeeds (null: keep the one used)."
+    }
+  ]
+}

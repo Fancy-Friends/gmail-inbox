@@ -18,21 +18,33 @@
  */
 
 export * from "./service.js";
+export * from "./kinds/history-list.js";
 export * from "./kinds/label-list.js";
+export * from "./kinds/mailbox-stop.js";
+export * from "./kinds/mailbox-watch.js";
 export * from "./kinds/message-get.js";
 export * from "./kinds/message-list.js";
 export * from "./kinds/thread-get.js";
+export * from "./kinds/message-received.js";
 
 import type { NodeKindDefinition } from "@particle-academy/fancy-flow/engine";
+import { gmailInboxHistoryListKind } from "./kinds/history-list.js";
 import { gmailInboxLabelListKind } from "./kinds/label-list.js";
+import { gmailInboxMailboxStopKind } from "./kinds/mailbox-stop.js";
+import { gmailInboxMailboxWatchKind } from "./kinds/mailbox-watch.js";
 import { gmailInboxMessageGetKind } from "./kinds/message-get.js";
 import { gmailInboxMessageListKind } from "./kinds/message-list.js";
 import { gmailInboxThreadGetKind } from "./kinds/thread-get.js";
+import { gmailInboxMessageReceivedTriggerKind } from "./kinds/message-received.js";
 
 /** Every Gmail Inbox kind, for a host that registers the lot. */
 export const GMAIL_INBOX_KINDS: NodeKindDefinition[] = [
+  gmailInboxHistoryListKind,
   gmailInboxLabelListKind,
+  gmailInboxMailboxStopKind,
+  gmailInboxMailboxWatchKind,
   gmailInboxMessageGetKind,
   gmailInboxMessageListKind,
   gmailInboxThreadGetKind,
+  gmailInboxMessageReceivedTriggerKind,
 ];

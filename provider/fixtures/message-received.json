@@ -1,0 +1,18 @@
+{
+  "$comment": "A decoded Pub/Sub push carrying Gmail's {emailAddress, historyId}.",
+  "operation": "message_received",
+  "response": {
+    "subscription": "projects/my-project/subscriptions/gmail-push",
+    "messageId": {
+      "$fake": "digits",
+      "length": 16
+    },
+    "publishTime": "2026-11-08T09:00:00.000Z",
+    "attributes": {},
+    "deliveryAttempt": null,
+    "data": {
+      "emailAddress": "user@example.test",
+      "historyId": 1234567891
+    }
+  }
+}
