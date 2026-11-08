@@ -33,9 +33,17 @@ test("every kind declares what it emits", () => {
 
 test("the registry names are exactly what the manifest says", () => {
   assert.deepEqual(GMAIL_INBOX_KINDS.map((kind) => kind.name), [
+    "@particle-academy/gmail_inbox_history_list",
     "@particle-academy/gmail_inbox_label_list",
+    "@particle-academy/gmail_inbox_mailbox_stop",
+    "@particle-academy/gmail_inbox_mailbox_watch",
     "@particle-academy/gmail_inbox_message_get",
     "@particle-academy/gmail_inbox_message_list",
-    "@particle-academy/gmail_inbox_thread_get"
+    "@particle-academy/gmail_inbox_thread_get",
+    "@particle-academy/gmail_inbox_message_received_trigger"
   ]);
+});
+
+test("a trigger takes no input port — it starts a run rather than continuing one", () => {
+  assert.deepEqual(GMAIL_INBOX_KINDS.find((k) => k.name.endsWith("_message_received_trigger"))?.inputs, []);
 });

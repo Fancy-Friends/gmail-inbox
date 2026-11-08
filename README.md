@@ -35,7 +35,7 @@ Everything below is generated from `provider/manifest.json`, so it cannot disagr
 
 ### Credentials
 
-A Gmail Inbox connection holds 4 values.
+A Gmail Inbox connection holds 6 values.
 
 **Two kinds of value, and mixing them up matters.** A `provider` credential is ONE value for the whole installation — an OAuth app's client secret serves every connected account. An `account` credential is one per connected account. A host that stores the second where it stores the first lets one account's credentials reach another's.
 
@@ -45,6 +45,8 @@ A Gmail Inbox connection holds 4 values.
 | **OAuth client secret** | per installation | **secret** | The client secret for the same OAuth app. One value for the whole installation. |
 | **Access token** | per connected account | **secret** | Per connected Google account, and it expires after ONE HOUR. The host refreshes it with the refresh token. |
 | **Refresh token** | per connected account | **secret** | Per connected Google account. Google issues one only when the consent request asks for offline access; without it the connection dies within the hour. |
+| **Push audience** *(optional)* | per installation | not secret | The audience set on the Pub/Sub PUSH subscription (normally the endpoint URL your host mounts for message_received). Every push's Google-signed token must name it; an unchecked audience accepts any token Google signs for anyone. Needed only for the message_received trigger. |
+| **Push service account** *(optional)* | per installation | not secret | The service account the push subscription authenticates as (its email). Every push's token must be for exactly this account: a stranger's subscription aimed at your URL carries a token Google signed correctly, and only this check refuses it. Needed only for message_received. |
 
 ### Authorising
 
@@ -67,6 +69,21 @@ The refresh tokens do **not** rotate: the same one is reusable, so a refresh may
 
 ### Actions
 
+#### `history_list` — List Gmail mailbox history
+
+List what changed in a mailbox since a history id: messages added or deleted, labels added or removed.
+
+`GET /gmail/v1/users/{userId}/history` · reads only — safe to replay
+
+| Input | Required | What it is |
+|---|---|---|
+| `userId` | yes | `me` is the connected account and is almost always what you want. |
+| `startHistoryId` | yes | Changes AFTER this id. Take it from a watch, a message, or a previous list's historyId. Out of Gmail's range (typically older than a week) it answers 404. |
+| `historyTypes` | no | Blank: every kind. messageAdded is new mail (and sent mail and drafts, unless a label narrows it). |
+| `labelId` | no | Only messages with this label, e.g. INBOX for received mail. |
+| `maxResults` | no | Gmail's own maximum is 500. |
+| `pageToken` | no | From a previous page's nextPageToken. |
+
 #### `label_list` — List Gmail labels
 
 List every label on the mailbox, system and user-created.
@@ -76,6 +93,29 @@ List every label on the mailbox, system and user-created.
 | Input | Required | What it is |
 |---|---|---|
 | `userId` | yes | Mailbox |
+
+#### `mailbox_stop` — Stop watching a Gmail mailbox
+
+Turn off push notifications for a mailbox.
+
+`POST /gmail/v1/users/{userId}/stop` · idempotent — safe to replay
+
+| Input | Required | What it is |
+|---|---|---|
+| `userId` | yes | `me` is the connected account and is almost always what you want. |
+
+#### `mailbox_watch` — Watch a Gmail mailbox
+
+Start (or renew) push notifications for a mailbox to a Cloud Pub/Sub topic.
+
+`POST /gmail/v1/users/{userId}/watch` · idempotent — safe to replay
+
+| Input | Required | What it is |
+|---|---|---|
+| `userId` | yes | `me` is the connected account and is almost always what you want. |
+| `topicName` | yes | The full topic name, in YOUR app's own Google Cloud project: Google requires its project id to match the project whose OAuth client makes this call. One topic serves every mailbox. |
+| `labelIds` | no | Comma-separated label ids to restrict notifications to (e.g. INBOX). Blank: every change is pushed. |
+| `labelFilterBehavior` | no | Whether the labels above are the ONLY ones notified (include) or the ones NOT notified (exclude). |
 
 #### `message_get` — Gmail message
 
@@ -113,6 +153,18 @@ Read every message in a conversation thread, oldest first.
 |---|---|---|
 | `userId` | yes | Mailbox |
 | `id` | yes | A message's threadId, from message_list or message_get. |
+
+### Triggers
+
+#### `message_received` — Gmail message received
+
+Start when new mail arrives in a watched mailbox, with every new message since the last run.
+
+A SUBSCRIPTION: Gmail Inbox delivers to your endpoint only while a subscription it issued is alive, at most 168 hours at a time. Its expiry is read from the `mailbox_watch` response (`expiration`); 86400 seconds before it, the host renews it (`mailbox_watch`). A lease that lapses is re-listed AND re-subscribed, because notifications during the gap are gone. Every delivery: the signature is verified before anything runs. The delivery only names what arrived, so the run's first step reads it: `history_list` with , published under `history`. A failed read fails the run.
+
+**You have to set this up with the provider first:**
+
+In YOUR app's Google Cloud project (the one owning the OAuth client): create a Pub/Sub topic, grant publish on it to gmail-api-push@system.gserviceaccount.com, and create a PUSH subscription to the route your host mounts for this trigger, with authentication on (a service account you choose; the endpoint URL as the audience). Put that audience and service account on the connection as pushAudience and pushServiceAccount, and fetch Google's signing keys for verification. Then call mailbox_watch with the topic for each mailbox and store its historyId as the trigger's cursor (startHistoryId); renew the watch daily. ONE topic serves every mailbox: route each push by its emailAddress, and only after the token verifies, to a mailbox you watched; drop an unmapped address with a 2xx. Persist cursor.next when a run succeeds. On cursor-expired or cursor-overflow, watch again for a fresh historyId FIRST, then list with message_list using the resyncQuery, and match it against the mail you already handled. This trigger never changes read state.
 
 ## Run it before you have credentials
 

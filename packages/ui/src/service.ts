@@ -99,6 +99,22 @@ export const GMAIL_INBOX_CREDENTIALS = [
     "scope": "account",
     "secret": true,
     "help": "Per connected Google account. Google issues one only when the consent request asks for offline access; without it the connection dies within the hour."
+  },
+  {
+    "key": "pushAudience",
+    "label": "Push audience",
+    "scope": "provider",
+    "secret": false,
+    "optional": true,
+    "help": "The audience set on the Pub/Sub PUSH subscription (normally the endpoint URL your host mounts for message_received). Every push's Google-signed token must name it; an unchecked audience accepts any token Google signs for anyone. Needed only for the message_received trigger."
+  },
+  {
+    "key": "pushServiceAccount",
+    "label": "Push service account",
+    "scope": "provider",
+    "secret": false,
+    "optional": true,
+    "help": "The service account the push subscription authenticates as (its email). Every push's token must be for exactly this account: a stranger's subscription aimed at your URL carries a token Google signed correctly, and only this check refuses it. Needed only for message_received."
   }
 ] as const;
 

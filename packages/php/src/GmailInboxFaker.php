@@ -35,10 +35,14 @@ final class GmailInboxFaker
         $fake = $request['fake'];
 
         return match ($operation) {
+            'history_list' => self::HistoryList($config, $fake),
             'label_list' => self::LabelList($config, $fake),
+            'mailbox_stop' => self::MailboxStop($config, $fake),
+            'mailbox_watch' => self::MailboxWatch($config, $fake),
             'message_get' => self::MessageGet($config, $fake),
             'message_list' => self::MessageList($config, $fake),
             'thread_get' => self::ThreadGet($config, $fake),
+            'message_received' => self::MessageReceived($config, $fake),
             default => throw new \InvalidArgumentException(
                 // A faker asked for an operation it has no shape for must SAY so.
                 // Making something up would produce a green run whose output
@@ -48,6 +52,31 @@ final class GmailInboxFaker
                     .'cannot be developed against, tested, or demonstrated.'
             ),
         };
+    }
+
+    /** @param array<string,mixed> $config */
+    private static function HistoryList(array $config, mixed $fake): array|\stdClass
+    {
+        return [
+        'history' => [
+            [
+                'id' => '1234567891',
+                'messagesAdded' => [
+                    [
+                        'message' => [
+                            'id' => $fake->hex(16),
+                            'threadId' => $fake->hex(16),
+                            'labelIds' => [
+                                'INBOX',
+                                'UNREAD',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ],
+        'historyId' => '1234567891',
+    ];
     }
 
     /** @param array<string,mixed> $config */
@@ -86,6 +115,21 @@ final class GmailInboxFaker
                 'threadsUnread' => 1,
             ],
         ],
+    ];
+    }
+
+    /** @param array<string,mixed> $config */
+    private static function MailboxStop(array $config, mixed $fake): array|\stdClass
+    {
+        return new \stdClass();
+    }
+
+    /** @param array<string,mixed> $config */
+    private static function MailboxWatch(array $config, mixed $fake): array|\stdClass
+    {
+        return [
+        'historyId' => '1234567890',
+        'expiration' => '1767312000000',
     ];
     }
 
@@ -224,6 +268,22 @@ final class GmailInboxFaker
                     ],
                 ],
             ],
+        ],
+    ];
+    }
+
+    /** @param array<string,mixed> $config */
+    private static function MessageReceived(array $config, mixed $fake): array|\stdClass
+    {
+        return [
+        'subscription' => 'projects/my-project/subscriptions/gmail-push',
+        'messageId' => implode('', array_map(static fn (): int => $fake->int(0, 9), range(1, 16))),
+        'publishTime' => '2026-11-08T09:00:00.000Z',
+        'attributes' => new \stdClass(),
+        'deliveryAttempt' => null,
+        'data' => [
+            'emailAddress' => 'user@example.test',
+            'historyId' => 1234567891,
         ],
     ];
     }

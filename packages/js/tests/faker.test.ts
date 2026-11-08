@@ -25,6 +25,33 @@ import { fakeRequest } from "@particle-academy/fancy-connector-core";
 
 import { gmailInboxFaker } from "../src/faker.js";
 
+test("history_list fakes the shape Gmail Inbox publishes", () => {
+  const config = {};
+
+  const faked = gmailInboxFaker("history_list", fakeRequest("gmail_inbox", "history_list", config));
+
+  assert.deepEqual(faked, {
+    "history": [
+      {
+        "id": "1234567891",
+        "messagesAdded": [
+          {
+            "message": {
+              "id": "c54cffbc0dd10ec1",
+              "threadId": "ad2e20654d742a74",
+              "labelIds": [
+                "INBOX",
+                "UNREAD"
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "historyId": "1234567891"
+  });
+});
+
 test("label_list fakes the shape Gmail Inbox publishes", () => {
   const config = {};
 
@@ -63,6 +90,25 @@ test("label_list fakes the shape Gmail Inbox publishes", () => {
         "threadsUnread": 1
       }
     ]
+  });
+});
+
+test("mailbox_stop fakes the shape Gmail Inbox publishes", () => {
+  const config = {};
+
+  const faked = gmailInboxFaker("mailbox_stop", fakeRequest("gmail_inbox", "mailbox_stop", config));
+
+  assert.deepEqual(faked, {});
+});
+
+test("mailbox_watch fakes the shape Gmail Inbox publishes", () => {
+  const config = {};
+
+  const faked = gmailInboxFaker("mailbox_watch", fakeRequest("gmail_inbox", "mailbox_watch", config));
+
+  assert.deepEqual(faked, {
+    "historyId": "1234567890",
+    "expiration": "1767312000000"
   });
 });
 
@@ -208,6 +254,28 @@ test("thread_get fakes the shape Gmail Inbox publishes", () => {
         }
       }
     ]
+  });
+});
+
+test("message_received fakes the shape Gmail Inbox publishes", () => {
+  const config = {
+    "resyncWindowDays": 7,
+    "labelId": "INBOX",
+    "historyTypes": "messageAdded"
+  };
+
+  const faked = gmailInboxFaker("message_received", fakeRequest("gmail_inbox", "message_received", config));
+
+  assert.deepEqual(faked, {
+    "subscription": "projects/my-project/subscriptions/gmail-push",
+    "messageId": "3998444640442585",
+    "publishTime": "2026-11-08T09:00:00.000Z",
+    "attributes": {},
+    "deliveryAttempt": null,
+    "data": {
+      "emailAddress": "user@example.test",
+      "historyId": 1234567891
+    }
   });
 });
 

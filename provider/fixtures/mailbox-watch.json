@@ -1,0 +1,7 @@
+{
+  "operation": "mailbox_watch",
+  "response": {
+    "historyId": "1234567890",
+    "expiration": "1767312000000"
+  }
+}

@@ -1,6 +1,6 @@
 {
   "name": "@particle-academy/gmail-inbox-js",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Gmail Inbox for Node — the service descriptor, its faker, its webhook verification, and one function per operation. Plain HTTP on @particle-academy/fancy-connector-core; no vendor SDK.",
   "repository": {
     "type": "git",
@@ -50,11 +50,11 @@
     "prepublishOnly": "tsup"
   },
   "dependencies": {
-    "@particle-academy/fancy-connector-core": ">=0.4.0 <2.0"
+    "@particle-academy/fancy-connector-core": ">=0.14.0 <2.0"
   },
   "peerDependencies": {
     "@particle-academy/fancy-flow": ">=0.47.1 <2.0",
-    "@particle-academy/gmail-inbox-ui": ">=0.1.0 <0.2.0"
+    "@particle-academy/gmail-inbox-ui": ">=0.2.0 <0.3.0"
   },
   "peerDependenciesMeta": {
     "@particle-academy/fancy-flow": {

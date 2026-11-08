@@ -36,6 +36,29 @@ def _as_number(value: Any) -> float | None:
         return None
 
 
+def _history_list(config: dict[str, Any], fake: FakeValues) -> Any:
+    return {
+        "history": [
+            {
+                "id": "1234567891",
+                "messagesAdded": [
+                    {
+                        "message": {
+                            "id": fake.hex(16),
+                            "threadId": fake.hex(16),
+                            "labelIds": [
+                                "INBOX",
+                                "UNREAD",
+                            ],
+                        },
+                    },
+                ],
+            },
+        ],
+        "historyId": "1234567891",
+    }
+
+
 def _label_list(config: dict[str, Any], fake: FakeValues) -> Any:
     return {
         "labels": [
@@ -70,6 +93,17 @@ def _label_list(config: dict[str, Any], fake: FakeValues) -> Any:
                 "threadsUnread": 1,
             },
         ],
+    }
+
+
+def _mailbox_stop(config: dict[str, Any], fake: FakeValues) -> Any:
+    return {}
+
+
+def _mailbox_watch(config: dict[str, Any], fake: FakeValues) -> Any:
+    return {
+        "historyId": "1234567890",
+        "expiration": "1767312000000",
     }
 
 
@@ -215,13 +249,36 @@ def _thread_get(config: dict[str, Any], fake: FakeValues) -> Any:
     }
 
 
+def _message_received(config: dict[str, Any], fake: FakeValues) -> Any:
+    return {
+        "subscription": "projects/my-project/subscriptions/gmail-push",
+        "messageId": "".join(str(fake.int(0, 9)) for _ in range(16)),
+        "publishTime": "2026-11-08T09:00:00.000Z",
+        "attributes": {},
+        "deliveryAttempt": None,
+        "data": {
+            "emailAddress": "user@example.test",
+            "historyId": 1234567891,
+        },
+    }
+
+
 def respond(operation: str, request: dict[str, Any]) -> Any:
     """Dispatch to the fixture for one operation."""
     config: dict[str, Any] = request.get("config") or {}
     fake: FakeValues = request["fake"]
 
+    if operation == "history_list":
+        return _history_list(config, fake)
+
     if operation == "label_list":
         return _label_list(config, fake)
+
+    if operation == "mailbox_stop":
+        return _mailbox_stop(config, fake)
+
+    if operation == "mailbox_watch":
+        return _mailbox_watch(config, fake)
 
     if operation == "message_get":
         return _message_get(config, fake)
@@ -231,6 +288,9 @@ def respond(operation: str, request: dict[str, Any]) -> Any:
 
     if operation == "thread_get":
         return _thread_get(config, fake)
+
+    if operation == "message_received":
+        return _message_received(config, fake)
 
     # A faker asked for an operation it has no shape for must SAY so. Making
     # something up would produce a green run whose output silently has none of

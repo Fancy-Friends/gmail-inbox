@@ -21,6 +21,34 @@ from fancy_gmail_inbox._fake import FakeValues, seed_for_call
 from fancy_gmail_inbox.faker import respond
 
 
+def test_history_list_fakes_the_published_shape() -> None:
+    config = {}
+    fake = FakeValues(seed_for_call("gmail_inbox", "history_list", config))
+
+    faked = respond("history_list", {"config": config, "fake": fake})
+
+    assert faked == {
+        "history": [
+            {
+                "id": "1234567891",
+                "messagesAdded": [
+                    {
+                        "message": {
+                            "id": "c54cffbc0dd10ec1",
+                            "threadId": "ad2e20654d742a74",
+                            "labelIds": [
+                                "INBOX",
+                                "UNREAD",
+                            ],
+                        },
+                    },
+                ],
+            },
+        ],
+        "historyId": "1234567891",
+    }
+
+
 def test_label_list_fakes_the_published_shape() -> None:
     config = {}
     fake = FakeValues(seed_for_call("gmail_inbox", "label_list", config))
@@ -60,6 +88,27 @@ def test_label_list_fakes_the_published_shape() -> None:
                 "threadsUnread": 1,
             },
         ],
+    }
+
+
+def test_mailbox_stop_fakes_the_published_shape() -> None:
+    config = {}
+    fake = FakeValues(seed_for_call("gmail_inbox", "mailbox_stop", config))
+
+    faked = respond("mailbox_stop", {"config": config, "fake": fake})
+
+    assert faked == {}
+
+
+def test_mailbox_watch_fakes_the_published_shape() -> None:
+    config = {}
+    fake = FakeValues(seed_for_call("gmail_inbox", "mailbox_watch", config))
+
+    faked = respond("mailbox_watch", {"config": config, "fake": fake})
+
+    assert faked == {
+        "historyId": "1234567890",
+        "expiration": "1767312000000",
     }
 
 
@@ -217,6 +266,29 @@ def test_thread_get_fakes_the_published_shape() -> None:
                 },
             },
         ],
+    }
+
+
+def test_message_received_fakes_the_published_shape() -> None:
+    config = {
+        "resyncWindowDays": 7,
+        "labelId": "INBOX",
+        "historyTypes": "messageAdded",
+    }
+    fake = FakeValues(seed_for_call("gmail_inbox", "message_received", config))
+
+    faked = respond("message_received", {"config": config, "fake": fake})
+
+    assert faked == {
+        "subscription": "projects/my-project/subscriptions/gmail-push",
+        "messageId": "3998444640442585",
+        "publishTime": "2026-11-08T09:00:00.000Z",
+        "attributes": {},
+        "deliveryAttempt": None,
+        "data": {
+            "emailAddress": "user@example.test",
+            "historyId": 1234567891,
+        },
     }
 
 

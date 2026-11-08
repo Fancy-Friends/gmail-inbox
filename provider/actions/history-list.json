@@ -1,0 +1,152 @@
+{
+  "$comment": "users.history.list -> GET gmail/v1/users/{userId}/history. Read from Google's reference 2026-11-04 and -07: startHistoryId REQUIRED; maxResults defaults to 100, max 500; 'Supplying an invalid or out of date startHistoryId typically returns an HTTP 404'; 'If you receive no nextPageToken in the response, there are no updates to retrieve and you can store the returned historyId'. Messages in a record 'will typically only have id and threadId'. Accepts gmail.readonly.",
+  "operation": "history_list",
+  "kind": "history_list",
+  "title": "List Gmail mailbox history",
+  "description": "List what changed in a mailbox since a history id: messages added or deleted, labels added or removed.",
+  "summary": "list mailbox history",
+  "docs": "https://developers.google.com/workspace/gmail/api/reference/rest/v1/users.history/list",
+  "sideEffects": "none",
+  "request": {
+    "method": "GET",
+    "path": "/gmail/v1/users/{userId}/history"
+  },
+  "config": [
+    {
+      "type": "text",
+      "key": "userId",
+      "label": "Mailbox",
+      "required": true,
+      "default": "me",
+      "description": "`me` is the connected account and is almost always what you want.",
+      "send": {
+        "in": "path",
+        "as": "userId",
+        "value": "string"
+      }
+    },
+    {
+      "type": "text",
+      "key": "startHistoryId",
+      "label": "Start history id",
+      "required": true,
+      "description": "Changes AFTER this id. Take it from a watch, a message, or a previous list's historyId. Out of Gmail's range (typically older than a week) it answers 404.",
+      "send": {
+        "in": "query",
+        "as": "startHistoryId",
+        "value": "string"
+      }
+    },
+    {
+      "type": "select",
+      "key": "historyTypes",
+      "label": "Only this kind of change",
+      "description": "Blank: every kind. messageAdded is new mail (and sent mail and drafts, unless a label narrows it).",
+      "options": [
+        {
+          "value": "messageAdded",
+          "label": "Messages added"
+        },
+        {
+          "value": "messageDeleted",
+          "label": "Messages deleted"
+        },
+        {
+          "value": "labelAdded",
+          "label": "Labels added"
+        },
+        {
+          "value": "labelRemoved",
+          "label": "Labels removed"
+        }
+      ],
+      "send": {
+        "in": "query",
+        "as": "historyTypes",
+        "value": "string",
+        "omitEmpty": true
+      }
+    },
+    {
+      "type": "text",
+      "key": "labelId",
+      "label": "Only this label",
+      "description": "Only messages with this label, e.g. INBOX for received mail.",
+      "send": {
+        "in": "query",
+        "as": "labelId",
+        "value": "string",
+        "omitEmpty": true
+      }
+    },
+    {
+      "type": "number",
+      "key": "maxResults",
+      "label": "Page size",
+      "min": 1,
+      "max": 500,
+      "default": 100,
+      "description": "Gmail's own maximum is 500.",
+      "send": {
+        "in": "query",
+        "as": "maxResults",
+        "value": "integer",
+        "min": 1,
+        "max": 500,
+        "default": 100
+      }
+    },
+    {
+      "type": "text",
+      "key": "pageToken",
+      "label": "Page token",
+      "description": "From a previous page's nextPageToken.",
+      "send": {
+        "in": "query",
+        "as": "pageToken",
+        "value": "string",
+        "omitEmpty": true
+      }
+    }
+  ],
+  "defaultConfig": {
+    "mode": "auto"
+  },
+  "outputShape": [
+    {
+      "path": "data.history",
+      "type": "array",
+      "description": "History records, oldest first. Each has an id and messagesAdded / messagesDeleted / labelsAdded / labelsRemoved; a message there carries only id and threadId: read its content with message_get."
+    },
+    {
+      "path": "data.historyId",
+      "type": "string",
+      "description": "The mailbox's CURRENT history id. Store it as the next start ONLY when there is no nextPageToken."
+    },
+    {
+      "path": "data.nextPageToken",
+      "type": "string",
+      "description": "Present when there is another page."
+    },
+    {
+      "path": "mode",
+      "type": "string",
+      "description": "Which estate this ran against. Google has no sandbox, so: fake or live."
+    }
+  ],
+  "contract": {
+    "sends": [
+      "userId",
+      "startHistoryId",
+      "historyTypes",
+      "labelId",
+      "maxResults",
+      "pageToken"
+    ],
+    "reads": [
+      "history",
+      "historyId",
+      "nextPageToken"
+    ]
+  }
+}

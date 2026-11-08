@@ -1,0 +1,30 @@
+{
+  "$comment": "One page: a new message added to INBOX. Messages in a history record carry only id and threadId.",
+  "operation": "history_list",
+  "response": {
+    "history": [
+      {
+        "id": "1234567891",
+        "messagesAdded": [
+          {
+            "message": {
+              "id": {
+                "$fake": "hex",
+                "length": 16
+              },
+              "threadId": {
+                "$fake": "hex",
+                "length": 16
+              },
+              "labelIds": [
+                "INBOX",
+                "UNREAD"
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "historyId": "1234567891"
+  }
+}

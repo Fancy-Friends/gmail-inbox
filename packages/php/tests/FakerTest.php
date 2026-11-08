@@ -24,6 +24,40 @@ use ParticleAcademy\Connectors\FakeValues;
  * path, with no error.
  */
 
+it('history_list fakes the shape Gmail Inbox publishes', function () {
+    $config = [];
+    $fake = new FakeValues(FakeValues::seedForCall('gmail_inbox', 'history_list', $config));
+
+    $faked = GmailInboxFaker::respond('history_list', ['config' => $config, 'fake' => $fake]);
+
+    // Through JSON and back, because a faked EMPTY object is a stdClass — the only
+    // PHP value that spells `{}` on the wire — and `toBe` compares objects by
+    // identity. This asserts the VALUES; the `{}`-versus-`[]` spelling is what
+    // weaver's cross-runtime parity suite asserts, byte for byte.
+    $faked = json_decode((string) json_encode($faked), true, 512, JSON_THROW_ON_ERROR);
+
+    expect($faked)->toBe([
+        'history' => [
+            [
+                'id' => '1234567891',
+                'messagesAdded' => [
+                    [
+                        'message' => [
+                            'id' => 'c54cffbc0dd10ec1',
+                            'threadId' => 'ad2e20654d742a74',
+                            'labelIds' => [
+                                'INBOX',
+                                'UNREAD',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ],
+        'historyId' => '1234567891',
+    ]);
+});
+
 it('label_list fakes the shape Gmail Inbox publishes', function () {
     $config = [];
     $fake = new FakeValues(FakeValues::seedForCall('gmail_inbox', 'label_list', $config));
@@ -69,6 +103,39 @@ it('label_list fakes the shape Gmail Inbox publishes', function () {
                 'threadsUnread' => 1,
             ],
         ],
+    ]);
+});
+
+it('mailbox_stop fakes the shape Gmail Inbox publishes', function () {
+    $config = [];
+    $fake = new FakeValues(FakeValues::seedForCall('gmail_inbox', 'mailbox_stop', $config));
+
+    $faked = GmailInboxFaker::respond('mailbox_stop', ['config' => $config, 'fake' => $fake]);
+
+    // Through JSON and back, because a faked EMPTY object is a stdClass — the only
+    // PHP value that spells `{}` on the wire — and `toBe` compares objects by
+    // identity. This asserts the VALUES; the `{}`-versus-`[]` spelling is what
+    // weaver's cross-runtime parity suite asserts, byte for byte.
+    $faked = json_decode((string) json_encode($faked), true, 512, JSON_THROW_ON_ERROR);
+
+    expect($faked)->toBe([]);
+});
+
+it('mailbox_watch fakes the shape Gmail Inbox publishes', function () {
+    $config = [];
+    $fake = new FakeValues(FakeValues::seedForCall('gmail_inbox', 'mailbox_watch', $config));
+
+    $faked = GmailInboxFaker::respond('mailbox_watch', ['config' => $config, 'fake' => $fake]);
+
+    // Through JSON and back, because a faked EMPTY object is a stdClass — the only
+    // PHP value that spells `{}` on the wire — and `toBe` compares objects by
+    // identity. This asserts the VALUES; the `{}`-versus-`[]` spelling is what
+    // weaver's cross-runtime parity suite asserts, byte for byte.
+    $faked = json_decode((string) json_encode($faked), true, 512, JSON_THROW_ON_ERROR);
+
+    expect($faked)->toBe([
+        'historyId' => '1234567890',
+        'expiration' => '1767312000000',
     ]);
 });
 
@@ -234,6 +301,35 @@ it('thread_get fakes the shape Gmail Inbox publishes', function () {
                     ],
                 ],
             ],
+        ],
+    ]);
+});
+
+it('message_received fakes the shape Gmail Inbox publishes', function () {
+    $config = [
+        'resyncWindowDays' => 7,
+        'labelId' => 'INBOX',
+        'historyTypes' => 'messageAdded',
+    ];
+    $fake = new FakeValues(FakeValues::seedForCall('gmail_inbox', 'message_received', $config));
+
+    $faked = GmailInboxFaker::respond('message_received', ['config' => $config, 'fake' => $fake]);
+
+    // Through JSON and back, because a faked EMPTY object is a stdClass — the only
+    // PHP value that spells `{}` on the wire — and `toBe` compares objects by
+    // identity. This asserts the VALUES; the `{}`-versus-`[]` spelling is what
+    // weaver's cross-runtime parity suite asserts, byte for byte.
+    $faked = json_decode((string) json_encode($faked), true, 512, JSON_THROW_ON_ERROR);
+
+    expect($faked)->toBe([
+        'subscription' => 'projects/my-project/subscriptions/gmail-push',
+        'messageId' => '3998444640442585',
+        'publishTime' => '2026-11-08T09:00:00.000Z',
+        'attributes' => [],
+        'deliveryAttempt' => null,
+        'data' => [
+            'emailAddress' => 'user@example.test',
+            'historyId' => 1234567891,
         ],
     ]);
 });
