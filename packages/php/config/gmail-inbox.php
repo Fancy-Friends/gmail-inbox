@@ -20,17 +20,17 @@ return [
 
     'credentials' => [
         // OAuth client ID (one per installation).
-        'clientId' => env('GMAIL_INBOX_CLIENTID'),
+        'clientId' => env('GMAIL_INBOX_CLIENT_ID', env('GMAIL_INBOX_CLIENTID')),
         // OAuth client secret (one per installation, secret).
-        'clientSecret' => env('GMAIL_INBOX_CLIENTSECRET'),
+        'clientSecret' => env('GMAIL_INBOX_CLIENT_SECRET', env('GMAIL_INBOX_CLIENTSECRET')),
         // Access token (per connected account, secret).
-        'accessToken' => env('GMAIL_INBOX_ACCESSTOKEN'),
+        'accessToken' => env('GMAIL_INBOX_ACCESS_TOKEN', env('GMAIL_INBOX_ACCESSTOKEN')),
         // Refresh token (per connected account, secret).
-        'refreshToken' => env('GMAIL_INBOX_REFRESHTOKEN'),
+        'refreshToken' => env('GMAIL_INBOX_REFRESH_TOKEN', env('GMAIL_INBOX_REFRESHTOKEN')),
         // Push audience (one per installation).
-        'pushAudience' => env('GMAIL_INBOX_PUSHAUDIENCE'),
+        'pushAudience' => env('GMAIL_INBOX_PUSH_AUDIENCE', env('GMAIL_INBOX_PUSHAUDIENCE')),
         // Push service account (one per installation).
-        'pushServiceAccount' => env('GMAIL_INBOX_PUSHSERVICEACCOUNT'),
+        'pushServiceAccount' => env('GMAIL_INBOX_PUSH_SERVICE_ACCOUNT', env('GMAIL_INBOX_PUSHSERVICEACCOUNT')),
     ],
 
     // The provider's signing keys (its JWKS `keys`), which the HOST fetches and
