@@ -33,6 +33,18 @@ dependencies nobody is tracking.
 
 Everything below is generated from `provider/manifest.json`, so it cannot disagree with what the packages do.
 
+### On Gmail Inbox's side
+
+1. **Create (or reuse) the Google Cloud project for **your app's name**** — Every Google connector shares ONE consent grant (oauth.grant "google"), so use one project and one OAuth client for all of them: one consent and one refresh token per person. ([developers.google.com](https://developers.google.com/workspace/guides/create-project))
+2. **Enable the Gmail API and the Cloud Pub/Sub API** — Console: APIs & Services, Library; open the Gmail API, then the Cloud Pub/Sub API and click Enable. ([developers.google.com](https://developers.google.com/workspace/guides/enable-apis))
+3. **Configure the consent screen** — Console: Google Auth platform, Branding (app name **your app's name**, support email, contact email), then Audience: Internal for people inside your Google Workspace organisation only, or External (while it is in testing, add each tester under Test users). Then Data Access, Add or Remove Scopes, and add `https://www.googleapis.com/auth/gmail.readonly` beside the scopes of any other Google connector you use. You cannot remove the consent screen once it is configured. This connector's scope is RESTRICTED: an External app needs Google's additional review for it, and the annual security assessment (CASA) applies to the whole OAuth client. Keep it on its own client if your other Google features should not carry that. ([developers.google.com](https://developers.google.com/workspace/guides/configure-oauth-consent))
+4. **Create a Web application OAuth client** — Console: Google Auth platform, Clients, Create Client; type Web application. Under Authorized redirect URIs click Add URI and paste **your host's OAuth redirect URL**, then Create. Copy the client ID and client secret when the client is created. ([developers.google.com](https://developers.google.com/workspace/guides/create-credentials))
+5. **Create the Pub/Sub topic Gmail publishes to** — In the SAME project, create a topic (any name, e.g. projects/<project>/topics/gmail-push) and grant publish on it to gmail-api-push@system.gserviceaccount.com. An organisation's domain-restricted sharing policy can refuse that grant: configure an exception for that service account if it does. mailbox_watch names this topic, and the watch must be renewed at least every 7 days (Google recommends daily). ([developers.google.com](https://developers.google.com/workspace/gmail/api/guides/push))
+6. **Create an AUTHENTICATED push subscription to **your app's name**** — Create a push subscription on the topic with endpoint **your host's webhook URL for this connector**. Check Enable authentication, select a service account, and enter **your host's webhook URL for this connector** as the audience. The Pub/Sub service agent needs iam.serviceAccountTokenCreator in the project, and whoever creates the subscription needs iam.serviceAccounts.actAs on that service account. Every push then carries a Google-signed token this connector checks for that audience and that service account's email. ([docs.cloud.google.com](https://docs.cloud.google.com/pubsub/docs/authenticate-push-subscriptions))
+7. **Connect an account and check it works** — Connect one Google account through **your app's name**'s OAuth flow, then run the check below. ([developers.google.com](https://developers.google.com/workspace/gmail/api/guides/push))
+
+Every step in full — who does it, what to paste, which credentials it yields, and how you know it worked — is in [SETUP.md](SETUP.md).
+
 ### Credentials
 
 A Gmail Inbox connection holds 6 values.

@@ -28,7 +28,7 @@ from .faker import respond
 from .service import BASE_URLS, CONNECTOR_API_VERSION, REQUIRES, SANDBOX, SERVICE, TITLE, descriptor
 from .triggers import message_received
 
-__version__ = "0.4.1"
+__version__ = "0.4.2"
 
 __all__ = [
     "BASE_URLS",

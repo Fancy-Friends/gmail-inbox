@@ -52,6 +52,79 @@
     "live": "https://gmail.googleapis.com"
   },
   "encoding": "json",
+  "summary": "Read and search Gmail, and trigger on new mail through Gmail's Pub/Sub push, verified before anything reads it.",
+  "$setupComment": "Steps read from Google's docs on 2026-11-14 (each cites its page). Every Google connector shares one grant, so the first four steps are the same for all of them; do them once.",
+  "setup": [
+    {
+      "title": "Create (or reuse) the Google Cloud project for {{appName}}",
+      "detail": "Every Google connector shares ONE consent grant (oauth.grant \"google\"), so use one project and one OAuth client for all of them: one consent and one refresh token per person.",
+      "url": "https://developers.google.com/workspace/guides/create-project"
+    },
+    {
+      "title": "Enable the Gmail API and the Cloud Pub/Sub API",
+      "detail": "Console: APIs & Services, Library; open the Gmail API, then the Cloud Pub/Sub API and click Enable.",
+      "url": "https://developers.google.com/workspace/guides/enable-apis"
+    },
+    {
+      "title": "Configure the consent screen",
+      "detail": "Console: Google Auth platform, Branding (app name {{appName}}, support email, contact email), then Audience: Internal for people inside your Google Workspace organisation only, or External (while it is in testing, add each tester under Test users). Then Data Access, Add or Remove Scopes, and add `https://www.googleapis.com/auth/gmail.readonly` beside the scopes of any other Google connector you use. You cannot remove the consent screen once it is configured. This connector's scope is RESTRICTED: an External app needs Google's additional review for it, and the annual security assessment (CASA) applies to the whole OAuth client. Keep it on its own client if your other Google features should not carry that.",
+      "url": "https://developers.google.com/workspace/guides/configure-oauth-consent"
+    },
+    {
+      "title": "Create a Web application OAuth client",
+      "detail": "Console: Google Auth platform, Clients, Create Client; type Web application. Under Authorized redirect URIs click Add URI and paste {{oauthRedirectUrl}}, then Create. Copy the client ID and client secret when the client is created.",
+      "url": "https://developers.google.com/workspace/guides/create-credentials",
+      "copy": [
+        {
+          "label": "Authorized redirect URI",
+          "value": "{{oauthRedirectUrl}}"
+        }
+      ],
+      "fields": [
+        "clientId",
+        "clientSecret"
+      ]
+    },
+    {
+      "title": "Create the Pub/Sub topic Gmail publishes to",
+      "detail": "In the SAME project, create a topic (any name, e.g. projects/<project>/topics/gmail-push) and grant publish on it to gmail-api-push@system.gserviceaccount.com. An organisation's domain-restricted sharing policy can refuse that grant: configure an exception for that service account if it does. mailbox_watch names this topic, and the watch must be renewed at least every 7 days (Google recommends daily).",
+      "url": "https://developers.google.com/workspace/gmail/api/guides/push",
+      "copy": [
+        {
+          "label": "Publisher principal",
+          "value": "gmail-api-push@system.gserviceaccount.com"
+        }
+      ]
+    },
+    {
+      "title": "Create an AUTHENTICATED push subscription to {{appName}}",
+      "detail": "Create a push subscription on the topic with endpoint {{webhookUrl}}. Check Enable authentication, select a service account, and enter {{webhookUrl}} as the audience. The Pub/Sub service agent needs iam.serviceAccountTokenCreator in the project, and whoever creates the subscription needs iam.serviceAccounts.actAs on that service account. Every push then carries a Google-signed token this connector checks for that audience and that service account's email.",
+      "url": "https://docs.cloud.google.com/pubsub/docs/authenticate-push-subscriptions",
+      "copy": [
+        {
+          "label": "Endpoint URL",
+          "value": "{{webhookUrl}}"
+        },
+        {
+          "label": "Audience",
+          "value": "{{webhookUrl}}"
+        }
+      ],
+      "fields": [
+        "pushAudience",
+        "pushServiceAccount"
+      ]
+    },
+    {
+      "title": "Connect an account and check it works",
+      "detail": "Connect one Google account through {{appName}}'s OAuth flow, then run the check below.",
+      "url": "https://developers.google.com/workspace/gmail/api/guides/push",
+      "actor": "agent",
+      "prompt": "Using {{appName}}'s {{connector}} connection, run label_list and report how many labels it returns. Then call mailbox_watch with the topic, ask the person to send the account an email, and confirm {{appName}} received a message_received push whose token verified and which routed to this connection.",
+      "done": "label_list answers, and a new email arrives as a verified message_received."
+    }
+  ],
+
   "credentialFields": [
     {
       "key": "clientId",
